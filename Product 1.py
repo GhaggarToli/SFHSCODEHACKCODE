@@ -153,62 +153,77 @@ class Quiz:
             {"question": "What is a firewall?", "options": ["A type of antivirus software", "A system designed to prevent unauthorized access to your network", "A tool to clean your computer"], "answer": 1},
             {"question": "Why should you avoid using public Wi-Fi for banking?", "options": ["It is often unsecured and can be intercepted by attackers", "Public Wi-Fi is always secure", "It makes your phone run slower"], "answer": 0},
             {"question": "What is ransomware?", "options": ["Software that encrypts your files and demands payment to unlock them", "A type of antivirus program", "A technique used to steal your personal data"], "answer": 0},
-            {"question": "How often should you update your software?", "options": ["As soon as updates are available", "Only when you notice a problem", "Never, if it seems to be working fine"], "answer": 0}
+            {"question": "How often should you update your software?", "options": ["As soon as updates are available", "Once a year", "Never"], "answer": 0},
         ]
         self.current_question = 0
         self.score = 0
 
-        self.frame = tk.Frame(self.parent_frame, bg="#ECF0F1")
-        self.frame.pack(expand=True, fill="both")
+    def start(self):
+        """Display the first question"""
+        self.display_question()
 
-        self.question_label = tk.Label(self.frame, text="", font=("Arial", 24), bg="#ECF0F1", fg="#2C3E50")
+    def display_question(self):
+        """Display the current question and options"""
+        question_data = self.questions[self.current_question]
+        question_text = question_data["question"]
+        options = question_data["options"]
+
+        # Clear previous question widgets if any
+        for widget in self.parent_frame.winfo_children():
+            widget.pack_forget()
+
+        # Show the current question
+        self.question_label = tk.Label(self.parent_frame, text=question_text, font=("Arial", 18, "bold"), bg="#ECF0F1", fg="#2C3E50")
         self.question_label.pack(pady=20)
 
-        self.options_frame = tk.Frame(self.frame, bg="#ECF0F1")
-        self.options_frame.pack(pady=20)
+        # Show the options
+        self.option_buttons = []
+        for index, option in enumerate(options):
+            option_button = tk.Button(self.parent_frame, text=option, font=("Arial", 14), bg="white", fg="#2C3E50",
+                                      command=lambda idx=index: self.check_answer(idx))
+            option_button.pack(pady=5)
+            self.option_buttons.append(option_button)
 
-        self.restart_button = tk.Button(self.frame, text="Restart Quiz", font=("Arial", 18, "bold"), bg="#1ABC9C", fg="white", command=self.restart_quiz)
-        self.restart_button.pack(pady=20)
-        self.restart_button.pack_forget()  # Hide the button initially
+    def check_answer(self, selected_index):
+        """Check if the selected answer is correct and update score"""
+        correct_index = self.questions[self.current_question]["answer"]
 
-    def start(self):
-        """Start the quiz"""
-        self.show_question()
-
-    def show_question(self):
-        """Display the current question and options"""
-        question = self.questions[self.current_question]
-        self.question_label.config(text=question["question"])
-
-        for widget in self.options_frame.winfo_children():
-            widget.destroy()
-
-        for index, option in enumerate(question["options"]):
-            tk.Button(self.options_frame, text=option, font=("Arial", 14), bg="#3498DB", fg="white", command=lambda idx=index: self.check_answer(idx)).pack(pady=5, fill="x")
-
-    def check_answer(self, selected_option):
-        """Check if the selected answer is correct"""
-        correct_option = self.questions[self.current_question]["answer"]
-        if selected_option == correct_option:
+        if selected_index == correct_index:
             self.score += 1
+            self.option_buttons[selected_index].configure(bg="green", fg="white")
+        else:
+            self.option_buttons[selected_index].configure(bg="red", fg="white")
+            self.option_buttons[correct_index].configure(bg="green", fg="white")
 
+        # Move to the next question after a short delay
+        self.parent_frame.after(1000, self.next_question)
+
+    def next_question(self):
+        """Move to the next question or show the final score"""
         self.current_question += 1
         if self.current_question < len(self.questions):
-            self.show_question()
+            self.display_question()
         else:
-            self.show_result()
+            self.show_score()
 
-    def show_result(self):
-        """Show the final score and a message"""
-        score_message = f"Your score: {self.score} out of {len(self.questions)}"
-        messagebox.showinfo("Quiz Completed", score_message)
-        self.restart_button.pack(pady=20)  # Show the Restart Quiz button
+    def show_score(self):
+        """Display the final score after the quiz ends"""
+        for widget in self.parent_frame.winfo_children():
+            widget.pack_forget()
+
+        score_text = f"Your final score is {self.score}/{len(self.questions)}"
+        score_label = tk.Label(self.parent_frame, text=score_text, font=("Arial", 24, "bold"), bg="#ECF0F1", fg="#2C3E50")
+        score_label.pack(pady=20)
+
+        # Add a restart quiz button
+        restart_button = tk.Button(self.parent_frame, text="Restart Quiz", font=("Arial", 18, "bold"), bg="#1ABC9C", fg="white", command=self.restart_quiz)
+        restart_button.pack(pady=20)
 
     def restart_quiz(self):
         """Restart the quiz"""
         self.current_question = 0
         self.score = 0
-        self.show_question()
+        self.start()
 
 class ProfilePage(tk.Frame):
     def __init__(self, parent, controller):
@@ -219,26 +234,26 @@ class ProfilePage(tk.Frame):
         self.label = tk.Label(self, text="Profile", font=("Arial", 36, "bold"), bg="#ECF0F1", fg="#2C3E50")
         self.label.pack(pady=30)
 
-        self.username_label = tk.Label(self, text="", font=("Arial", 18), bg="#ECF0F1", fg="#2C3E50")
+        # User Information Labels
+        self.username_label = tk.Label(self, text="Username: ", font=("Arial", 18), bg="#ECF0F1", fg="#2C3E50")
         self.username_label.pack(pady=5)
 
-        self.age_label = tk.Label(self, text="", font=("Arial", 18), bg="#ECF0F1", fg="#2C3E50")
+        self.age_label = tk.Label(self, text="Age: ", font=("Arial", 18), bg="#ECF0F1", fg="#2C3E50")
         self.age_label.pack(pady=5)
 
-        self.gender_label = tk.Label(self, text="", font=("Arial", 18), bg="#ECF0F1", fg="#2C3E50")
+        self.gender_label = tk.Label(self, text="Gender: ", font=("Arial", 18), bg="#ECF0F1", fg="#2C3E50")
         self.gender_label.pack(pady=5)
 
-        self.goals_label = tk.Label(self, text="", font=("Arial", 18), bg="#ECF0F1", fg="#2C3E50")
+        self.goals_label = tk.Label(self, text="Goals: ", font=("Arial", 18), bg="#ECF0F1", fg="#2C3E50")
         self.goals_label.pack(pady=5)
 
     def update_info(self):
-        """Update the profile information from user_info"""
+        """Update the profile page with the user's information"""
         user_info = self.controller.user_info
-        if user_info:
-            self.username_label.config(text=f"Username: {user_info.get('username', 'Not Set')}")
-            self.age_label.config(text=f"Age: {user_info.get('age', 'Not Set')}")
-            self.gender_label.config(text=f"Gender: {user_info.get('gender', 'Not Set')}")
-            self.goals_label.config(text=f"Goals: {user_info.get('goals', 'Not Set')}")
+        self.username_label.config(text=f"Username: {user_info.get('username', '')}")
+        self.age_label.config(text=f"Age: {user_info.get('age', '')}")
+        self.gender_label.config(text=f"Gender: {user_info.get('gender', '')}")
+        self.goals_label.config(text=f"Goals: {user_info.get('goals', '')}")
 
 class ScamDetectorPage(tk.Frame):
     def __init__(self, parent, controller):
@@ -249,52 +264,37 @@ class ScamDetectorPage(tk.Frame):
         self.label = tk.Label(self, text="Scam Detector", font=("Arial", 36, "bold"), bg="#ECF0F1", fg="#2C3E50")
         self.label.pack(pady=30)
 
-        # Email Detection
-        self.email_label = tk.Label(self, text="Enter an email to check for scams:", bg="#ECF0F1", fg="#2C3E50")
-        self.email_label.pack(pady=10)
-        self.email_entry = tk.Entry(self, font=("Arial", 14))
-        self.email_entry.pack(pady=5)
-        self.email_check_button = tk.Button(self, text="Check Email", font=("Arial", 14), bg="#1ABC9C", fg="white", command=self.check_email)
-        self.email_check_button.pack(pady=10)
+        # Instruction
+        self.instruction_label = tk.Label(self, text="Enter phone number or email to check for scams", font=("Arial", 18), bg="#ECF0F1", fg="#2C3E50")
+        self.instruction_label.pack(pady=20)
 
-        self.email_result = tk.Label(self, text="", bg="#ECF0F1", fg="#2C3E50")
-        self.email_result.pack(pady=10)
+        # Entry for phone number or email
+        self.input_entry = tk.Entry(self, font=("Arial", 18), width=40)
+        self.input_entry.pack(pady=10)
 
-        # Phone Number Detection
-        self.phone_label = tk.Label(self, text="Enter a phone number to check for scams:", bg="#ECF0F1", fg="#2C3E50")
-        self.phone_label.pack(pady=10)
-        self.phone_entry = tk.Entry(self, font=("Arial", 14))
-        self.phone_entry.pack(pady=5)
-        self.phone_check_button = tk.Button(self, text="Check Phone Number", font=("Arial", 14), bg="#1ABC9C", fg="white", command=self.check_phone_number)
-        self.phone_check_button.pack(pady=10)
+        # Detect button
+        self.detect_button = tk.Button(self, text="Detect", font=("Arial", 18, "bold"), bg="#1ABC9C", fg="white", command=self.detect_scam)
+        self.detect_button.pack(pady=20)
 
-        self.phone_result = tk.Label(self, text="", bg="#ECF0F1", fg="#2C3E50")
-        self.phone_result.pack(pady=10)
+        # Result Label
+        self.result_label = tk.Label(self, text="", font=("Arial", 18), bg="#ECF0F1", fg="#2C3E50")
+        self.result_label.pack(pady=20)
 
-    def check_email(self):
-        email = self.email_entry.get()
-        if self.is_scam_email(email):
-            self.email_result.config(text="This email is likely a scam.", fg="#E74C3C")
+    def detect_scam(self):
+        input_value = self.input_entry.get()
+        phone_pattern = r"^\+?[1-9]\d{1,14}$"
+        email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+
+        if re.match(phone_pattern, input_value):
+            self.result_label.config(text=f"Phone number '{input_value}' is not detected as a scam.")
+        elif re.match(email_pattern, input_value):
+            self.result_label.config(text=f"Email '{input_value}' is not detected as a scam.")
         else:
-            self.email_result.config(text="This email seems safe.", fg="#2ECC71")
-
-    def check_phone_number(self):
-        phone_number = self.phone_entry.get()
-        if self.is_scam_phone_number(phone_number):
-            self.phone_result.config(text="This phone number is likely a scam.", fg="#E74C3C")
-        else:
-            self.phone_result.config(text="This phone number seems safe.", fg="#2ECC71")
-
-    def is_scam_email(self, email):
-        # Basic email validation
-        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-        return not re.match(pattern, email)
-
-    def is_scam_phone_number(self, phone_number):
-        # Basic phone number validation
-        pattern = r'^\+?[1-9]\d{1,14}$'
-        return not re.match(pattern, phone_number)
+            self.result_label.config(text="Invalid input. Please enter a valid phone number or email.")
 
 if __name__ == "__main__":
     app = CyberSafetyApp()
     app.mainloop()
+
+
+
